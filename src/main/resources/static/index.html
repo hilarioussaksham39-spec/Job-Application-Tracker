@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Tracker</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f4f6fa;
+            color: #182230;
+        }
+
+        .application {
+            background: white;
+            padding: 20px;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            border: 1px solid #dce2eb;
+        }
+
+        .application h2 {
+            margin-top: 0;
+        }
+
+        #message {
+            color: #526070;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>My Job Applications</h1>
+	<form id="application-form">
+    <p>
+        <label for="company">Company</label>
+        <input id="company" name="company" required>
+    </p>
+
+    <p>
+        <label for="role">Role</label>
+        <input id="role" name="role" required>
+    </p>
+
+    <button id="submit-button" type="submit">Add application</button>
+    <p id="form-message" role="status"></p>
+</form>
+    <p id="message" role="status">Loading applications...</p>
+    <div id="applications"></div>
+
+    <script>
+        async function loadApplications() {
+            const message = document.getElementById("message");
+            const container = document.getElementById("applications");
+
+            try {
+                const response = await fetch("/api/applications");
+
+                if (!response.ok) {
+                    throw new Error("Request failed: " + response.status);
+                }
+
+                const applications = await response.json();
+
+                container.replaceChildren();
+
+                for (const application of applications) {
+                    const card = document.createElement("article");
+                    card.className = "application";
+
+                    const company = document.createElement("h2");
+                    company.textContent = application.company;
+
+                    const role = document.createElement("p");
+                    role.textContent = "Role: " + application.role;
+
+                    const status = document.createElement("label");
+status.textContent = "Status: ";
+
+const statusSelect = document.createElement("select");
+
+const allowedStatuses = [
+    "APPLIED",
+    "ASSESSMENT",
+    "INTERVIEW",
+    "OFFER",
+    "REJECTED"
+];
+
+for (const value of allowedStatuses) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    statusSelect.appendChild(option);
+}
+
+statusSelect.value = application.status;
+
+statusSelect.addEventListener("change", async () => {
+    const previousStatus = application.status;
+    const selectedStatus = statusSelect.value;
+
+    statusSelect.disabled = true;
+
+    try {
+        const response = await fetch(
+            "/api/applications/" + application.id + "/status",
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    status: selectedStatus
+                })
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Update failed: " + response.status);
+        }
+
+        application.status = selectedStatus;
+    } catch (error) {
+        statusSelect.value = previousStatus;
+        alert("Could not update the status. Please try again.");
+        console.error(error);
+    } finally {
+        statusSelect.disabled = false;
+    }
+});
+
+status.appendChild(statusSelect);
+
+                    const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.textContent = "Delete";
+
+deleteButton.addEventListener("click", async () => {
+    if (!confirm("Delete this application?")) {
+        return;
+    }
+
+    deleteButton.disabled = true;
+
+    try {
+        const response = await fetch(
+            "/api/applications/" + application.id,
+            { method: "DELETE" }
+        );
+
+        if (!response.ok) {
+            throw new Error("Delete failed: " + response.status);
+        }
+
+        await loadApplications();
+    } catch (error) {
+        alert("Could not delete the application. Please try again.");
+        console.error(error);
+    } finally {
+        deleteButton.disabled = false;
+    }
+});
+
+card.append(company, role, status, deleteButton);
+container.appendChild(card);
+                }
+
+                message.textContent = applications.length === 0
+                    ? "No applications yet."
+                    : applications.length + " applications";
+            } catch (error) {
+                message.textContent =
+                    "Could not load applications. Please try again.";
+                console.error(error);
+            }
+        }
+		const form = document.getElementById("application-form");
+
+form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const button = document.getElementById("submit-button");
+    const message = document.getElementById("form-message");
+
+    button.disabled = true;
+    message.textContent = "Saving...";
+
+    try {
+        const response = await fetch("/api/applications", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                company: document.getElementById("company").value,
+                role: document.getElementById("role").value
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Request failed: " + response.status);
+        }
+
+        form.reset();
+        message.textContent = "Application added!";
+        await loadApplications();
+    } catch (error) {
+        message.textContent =
+            "Could not save. Check the company and role, then try again.";
+        console.error(error);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+        loadApplications();
+    </script>
+</body>
+</html>
