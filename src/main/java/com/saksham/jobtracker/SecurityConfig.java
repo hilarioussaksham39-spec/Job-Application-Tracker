@@ -50,7 +50,11 @@ public class SecurityConfig {
                                 "/security.js",
                                 "/api/auth/register",
                                 "/api/auth/csrf",
-                                "/error"
+                                "/error",
+								"/manifest.json",
+                                "/pwa.js",
+                                "/sw.js",
+                                "/icons/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
