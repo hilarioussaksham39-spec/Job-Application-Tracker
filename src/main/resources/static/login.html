@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Job Tracker</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 60px auto;
+            padding: 0 20px;
+            background: #f4f6fa;
+            color: #182230;
+        }
+
+        form {
+            display: grid;
+            gap: 12px;
+        }
+
+        input, button {
+            font: inherit;
+            padding: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Log in</h1>
+
+    <form action="/login" method="post">
+        <label for="username">Username</label>
+        <input
+            id="username"
+            name="username"
+            autocomplete="username"
+            required
+        >
+
+        <label for="password">Password</label>
+        <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+        >
+
+        <input id="csrf" type="hidden">
+
+        <button id="login-button" type="submit" disabled>
+            Log in
+        </button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <p>No account? <a href="/register.html">Register</a></p>
+
+    <script src="/security.js"></script>
+    <script>
+        const message = document.getElementById("message");
+        const parameters = new URLSearchParams(window.location.search);
+
+        if (parameters.has("error")) {
+            message.textContent = "Invalid username or password.";
+        } else if (parameters.has("logout")) {
+            message.textContent = "You have been logged out.";
+        }
+
+        async function prepareLogin() {
+            try {
+                const csrf = await getCsrfToken();
+                const input = document.getElementById("csrf");
+
+                input.name = csrf.parameterName;
+                input.value = csrf.token;
+
+                document.getElementById("login-button").disabled = false;
+            } catch (error) {
+                message.textContent =
+                    "Could not prepare login. Refresh to try again.";
+                console.error(error);
+            }
+        }
+
+        prepareLogin();
+    </script>
+</body>
+</html>
