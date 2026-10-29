@@ -34,6 +34,7 @@
 </head>
 
 <body>
+<button id="logout-button" type="button">Log out</button>
     <h1>My Job Applications</h1>
 	<form id="application-form">
     <p>
@@ -59,7 +60,7 @@
             const container = document.getElementById("applications");
 
             try {
-                const response = await fetch("/api/applications");
+                const response = await apiFetch("/api/applications");
 
                 if (!response.ok) {
                     throw new Error("Request failed: " + response.status);
