@@ -3,241 +3,492 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
     <title>Job Tracker</title>
 
     <style>
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
-            background: #f4f6fa;
+            margin: 0;
+            background: #f4f7fb;
+            color: #182230;
+            font-family: system-ui, sans-serif;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: auto;
+            padding: 32px 20px;
+        }
+
+        header, .card-top, .card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        h1 { margin: 0; letter-spacing: -1px; }
+        h2 { margin: 0 0 16px; font-size: 1.2rem; }
+        p { line-height: 1.5; }
+        .muted { color: #5c6b7c; }
+
+        button, input, select {
+            font: inherit;
+            border-radius: 10px;
+            padding: 11px 14px;
+        }
+
+        input, select {
+            width: 100%;
+            min-width: 0;
+            border: 1px solid #bdc9d8;
+            background: white;
             color: #182230;
         }
 
-        .application {
+        button {
+            cursor: pointer;
+            border: 1px solid #bdc9d8;
             background: white;
-            padding: 20px;
-            margin-bottom: 16px;
-            border-radius: 12px;
-            border: 1px solid #dce2eb;
+            color: #182230;
+            min-height: 44px;
         }
 
-        .application h2 {
-            margin-top: 0;
+        button:hover { background: #eef3fa; }
+        button:disabled { opacity: .6; cursor: wait; }
+
+        :focus-visible {
+            outline: 3px solid #93b4ff;
+            outline-offset: 3px;
         }
 
-        #message {
-            color: #526070;
+        .primary {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .primary:hover { background: #1d4ed8; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 12px;
+            margin: 28px 0;
+        }
+
+        .stat, .panel, .application {
+            background: white;
+            border: 1px solid #dce4ee;
+            border-radius: 16px;
+        }
+
+        .stat { padding: 18px; }
+        .stat strong { display: block; font-size: 1.8rem; }
+        .stat span { font-size: .85rem; color: #5c6b7c; }
+
+        .panel { padding: 24px; margin-bottom: 24px; }
+
+        #application-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            align-items: end;
+            gap: 16px;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-size: .9rem;
+            font-weight: 600;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        #applications {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .application { padding: 22px; }
+        .application h3 { margin: 0; overflow-wrap: anywhere; }
+        .application p { overflow-wrap: anywhere; }
+
+        .badge {
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: .75rem;
+            font-weight: 700;
+            background: #edf2f7;
+            white-space: nowrap;
+        }
+
+        .badge[data-status="APPLIED"] { background: #dbeafe; color: #1e40af; }
+        .badge[data-status="ASSESSMENT"] { background: #fef3c7; color: #92400e; }
+        .badge[data-status="INTERVIEW"] { background: #ede9fe; color: #5b21b6; }
+        .badge[data-status="OFFER"] { background: #dcfce7; color: #166534; }
+        .badge[data-status="REJECTED"] { background: #fee2e2; color: #991b1b; }
+
+        .card-actions { align-items: end; margin-top: 20px; }
+        .card-actions label { flex: 1; }
+        .danger { color: #b42318; }
+
+        @media (max-width: 850px) {
+            .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            #application-form { grid-template-columns: 1fr 1fr; }
+            #application-form button { grid-column: 1 / -1; }
+        }
+
+        @media (max-width: 600px) {
+            main { padding: 24px 16px; }
+            h1 { font-size: 1.6rem; }
+            .panel { padding: 18px; }
+
+            #application-form, .filters, #applications {
+                grid-template-columns: 1fr;
+            }
+
+            .card-top { align-items: start; flex-wrap: wrap; }
+            .stat { padding: 12px; }
+            .stat strong { font-size: 1.5rem; }
         }
     </style>
 </head>
 
 <body>
-<button id="logout-button" type="button">Log out</button>
-    <h1>My Job Applications</h1>
-	<form id="application-form">
-    <p>
-        <label for="company">Company</label>
-        <input id="company" name="company" required>
-    </p>
+<main>
+    <header>
+        <div>
+            <h1>Job Tracker</h1>
+            <p class="muted">Keep your next opportunity in sight.</p>
+        </div>
+        <button id="logout-button" type="button">Log out</button>
+    </header>
 
-    <p>
-        <label for="role">Role</label>
-        <input id="role" name="role" required>
-    </p>
+    <section id="stats" class="stats" aria-label="Application counts"></section>
 
-    <button id="submit-button" type="submit">Add application</button>
-    <p id="form-message" role="status"></p>
-</form>
-    <p id="message" role="status">Loading applications...</p>
-    <div id="applications"></div>
-	<script src="/security.js"></script>
+    <section class="panel">
+        <h2>Add an application</h2>
 
-    <script>
-        async function loadApplications() {
-            const message = document.getElementById("message");
-            const container = document.getElementById("applications");
+        <form id="application-form">
+            <label for="company">
+                Company
+                <input id="company" name="company"
+                       placeholder="Company name" maxlength="150" required>
+            </label>
 
-            try {
-                const response = await apiFetch("/api/applications");
+            <label for="role">
+                Role
+                <input id="role" name="role"
+                       placeholder="Job title" maxlength="150" required>
+            </label>
 
-                if (!response.ok) {
-                    throw new Error("Request failed: " + response.status);
-                }
+            <button id="submit-button" class="primary" type="submit">
+                Add application
+            </button>
+        </form>
 
-                const applications = await response.json();
+        <p id="form-message" role="status"></p>
+    </section>
 
-                container.replaceChildren();
+    <section class="panel" aria-label="Search and filters">
+        <div class="filters">
+            <label for="search">
+                Search
+                <input id="search" type="search"
+                       placeholder="Search company or role">
+            </label>
 
-                for (const application of applications) {
-                    const card = document.createElement("article");
-                    card.className = "application";
+            <label for="status-filter">
+                Status
+                <select id="status-filter">
+                    <option value="ALL">All statuses</option>
+                </select>
+            </label>
 
-                    const company = document.createElement("h2");
-                    company.textContent = application.company;
+            <button id="refresh-button" type="button">Refresh</button>
+        </div>
+    </section>
 
-                    const role = document.createElement("p");
-                    role.textContent = "Role: " + application.role;
+    <p id="message" class="muted" role="status">Loading applications...</p>
+    <section id="applications" aria-label="Your applications"></section>
+</main>
 
-                    const status = document.createElement("label");
-status.textContent = "Status: ";
+<script src="/security.js"></script>
+<script>
+    const statuses = [
+        "APPLIED", "ASSESSMENT", "INTERVIEW", "OFFER", "REJECTED"
+    ];
 
-const statusSelect = document.createElement("select");
+    const labels = {
+        APPLIED: "Applied",
+        ASSESSMENT: "Assessment",
+        INTERVIEW: "Interview",
+        OFFER: "Offer",
+        REJECTED: "Rejected"
+    };
 
-const allowedStatuses = [
-    "APPLIED",
-    "ASSESSMENT",
-    "INTERVIEW",
-    "OFFER",
-    "REJECTED"
-];
+    let applications = [];
 
-for (const value of allowedStatuses) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    statusSelect.appendChild(option);
-}
+    const container = document.getElementById("applications");
+    const message = document.getElementById("message");
+    const search = document.getElementById("search");
+    const filter = document.getElementById("status-filter");
+    const form = document.getElementById("application-form");
 
-statusSelect.value = application.status;
-
-statusSelect.addEventListener("change", async () => {
-    const previousStatus = application.status;
-    const selectedStatus = statusSelect.value;
-
-    statusSelect.disabled = true;
-
-    try {
-        const response = await apiFetch(
-            "/api/applications/" + application.id + "/status",
-            {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    status: selectedStatus
-                })
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error("Update failed: " + response.status);
-        }
-
-        application.status = selectedStatus;
-    } catch (error) {
-        statusSelect.value = previousStatus;
-        alert("Could not update the status. Please try again.");
-        console.error(error);
-    } finally {
-        statusSelect.disabled = false;
-    }
-});
-
-status.appendChild(statusSelect);
-
-                    const deleteButton = document.createElement("button");
-deleteButton.type = "button";
-deleteButton.textContent = "Delete";
-
-deleteButton.addEventListener("click", async () => {
-    if (!confirm("Delete this application?")) {
-        return;
+    for (const status of statuses) {
+        filter.add(new Option(labels[status], status));
     }
 
-    deleteButton.disabled = true;
-
-    try {
-        const response = await apiFetch(
-            "/api/applications/" + application.id,
-            { method: "DELETE" }
-        );
-
-        if (!response.ok) {
-            throw new Error("Delete failed: " + response.status);
-        }
-
-        await loadApplications();
-    } catch (error) {
-        alert("Could not delete the application. Please try again.");
-        console.error(error);
-    } finally {
-        deleteButton.disabled = false;
-    }
-});
-
-card.append(company, role, status, deleteButton);
-container.appendChild(card);
-                }
-
-                message.textContent = applications.length === 0
-                    ? "No applications yet."
-                    : applications.length + " applications";
-            } catch (error) {
-                message.textContent =
-                    "Could not load applications. Please try again.";
-                console.error(error);
-            }
-        }
-		const form = document.getElementById("application-form");
-
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const button = document.getElementById("submit-button");
-    const message = document.getElementById("form-message");
-
-    button.disabled = true;
-    message.textContent = "Saving...";
-
-    try {
-        const response = await apiFetch("/api/applications", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                company: document.getElementById("company").value,
-                role: document.getElementById("role").value
-            })
-        });
+    async function request(url, options = {}) {
+        const response = await apiFetch(url, options);
 
         if (!response.ok) {
             throw new Error("Request failed: " + response.status);
         }
 
-        form.reset();
-        message.textContent = "Application added!";
-        await loadApplications();
-    } catch (error) {
-        message.textContent =
-            "Could not save. Check the company and role, then try again.";
-        console.error(error);
-    } finally {
-        button.disabled = false;
+        return response;
     }
-});
 
-        loadApplications();
-		document.getElementById("logout-button")
-    .addEventListener("click", async () => {
-        try {
-            const response = await apiFetch("/logout", {
-                method: "POST"
-            });
+    function renderStats() {
+        const stats = document.getElementById("stats");
+        stats.replaceChildren();
 
-            if (!response.ok) {
-                throw new Error("Logout failed");
+        const counts = [
+            ["Total", applications.length],
+            ...statuses.map(status => [
+                labels[status],
+                applications.filter(app => app.status === status).length
+            ])
+        ];
+
+        for (const [label, count] of counts) {
+            const card = document.createElement("div");
+            card.className = "stat";
+
+            const number = document.createElement("strong");
+            number.textContent = count;
+
+            const caption = document.createElement("span");
+            caption.textContent = label;
+
+            card.append(number, caption);
+            stats.appendChild(card);
+        }
+    }
+
+    function renderApplications() {
+        const query = search.value.trim().toLowerCase();
+
+        const visible = applications.filter(app => {
+            const matchesSearch =
+                app.company.toLowerCase().includes(query) ||
+                app.role.toLowerCase().includes(query);
+
+            const matchesStatus =
+                filter.value === "ALL" || app.status === filter.value;
+
+            return matchesSearch && matchesStatus;
+        });
+
+        container.replaceChildren();
+        renderStats();
+
+        if (applications.length === 0) {
+            message.textContent =
+                "No applications yet. Add your first one above.";
+        } else if (visible.length === 0) {
+            message.textContent = "No applications match your filters.";
+        } else {
+            message.textContent =
+                `Showing ${visible.length} of ${applications.length} applications`;
+        }
+
+        for (const app of visible) {
+            const card = document.createElement("article");
+            card.className = "application";
+
+            const top = document.createElement("div");
+            top.className = "card-top";
+
+            const company = document.createElement("h3");
+            company.textContent = app.company;
+
+            const badge = document.createElement("span");
+            badge.className = "badge";
+            badge.dataset.status = app.status;
+            badge.textContent = labels[app.status];
+
+            const role = document.createElement("p");
+            role.className = "muted";
+            role.textContent = app.role;
+
+            const actions = document.createElement("div");
+            actions.className = "card-actions";
+
+            const statusLabel = document.createElement("label");
+            statusLabel.textContent = "Status";
+
+            const select = document.createElement("select");
+
+            for (const status of statuses) {
+                select.add(new Option(labels[status], status));
             }
 
-            window.location.href = "/login.html?logout";
+            select.value = app.status;
+
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "danger";
+            remove.textContent = "Delete";
+            remove.setAttribute("aria-label", `Delete ${app.company} application`);
+
+            select.addEventListener("change", async () => {
+                const previous = app.status;
+                const selected = select.value;
+                select.disabled = true;
+                remove.disabled = true;
+
+                try {
+                    await request(`/api/applications/${app.id}/status`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: selected })
+                    });
+
+                    app.status = selected;
+                    renderApplications();
+                } catch (error) {
+                    select.value = previous;
+                    alert("Could not update the status. Please try again.");
+                    console.error(error);
+                } finally {
+                    select.disabled = false;
+                    remove.disabled = false;
+                }
+            });
+
+            remove.addEventListener("click", async () => {
+                if (!confirm(`Delete the application at ${app.company}?`)) {
+                    return;
+                }
+
+                remove.disabled = true;
+                select.disabled = true;
+
+                try {
+                    await request(`/api/applications/${app.id}`, {
+                        method: "DELETE"
+                    });
+
+                    applications = applications.filter(item => item.id !== app.id);
+                    renderApplications();
+                } catch (error) {
+                    alert("Could not delete the application. Please try again.");
+                    console.error(error);
+                } finally {
+                    remove.disabled = false;
+                    select.disabled = false;
+                }
+            });
+
+            statusLabel.appendChild(select);
+            actions.append(statusLabel, remove);
+            top.append(company, badge);
+            card.append(top, role, actions);
+            container.appendChild(card);
+        }
+    }
+
+    async function loadApplications() {
+        const refresh = document.getElementById("refresh-button");
+        refresh.disabled = true;
+        message.textContent = "Loading applications...";
+
+        try {
+            const response = await request("/api/applications");
+            applications = await response.json();
+            renderApplications();
         } catch (error) {
-            alert("Could not log out. Please try again.");
+            message.textContent =
+                "Could not refresh applications. Click Refresh to try again.";
             console.error(error);
+        } finally {
+            refresh.disabled = false;
+        }
+    }
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+
+        const button = document.getElementById("submit-button");
+        const feedback = document.getElementById("form-message");
+
+        const company = document.getElementById("company").value.trim();
+        const role = document.getElementById("role").value.trim();
+
+        if (!company || !role) {
+            feedback.textContent = "Enter both a company and a role.";
+            return;
+        }
+
+        button.disabled = true;
+        feedback.textContent = "Saving...";
+
+        try {
+            const response = await request("/api/applications", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ company, role })
+            });
+
+            const created = await response.json();
+            applications.unshift(created);
+
+            form.reset();
+            search.value = "";
+            filter.value = "ALL";
+            renderApplications();
+            feedback.textContent = "Application added!";
+        } catch (error) {
+            feedback.textContent =
+                "Could not add the application. Please try again.";
+            console.error(error);
+        } finally {
+            button.disabled = false;
         }
     });
-    </script>
+
+    document.getElementById("logout-button")
+        .addEventListener("click", async () => {
+            const button = document.getElementById("logout-button");
+            button.disabled = true;
+
+            try {
+                await request("/logout", { method: "POST" });
+                window.location.href = "/login.html?logout";
+            } catch (error) {
+                alert("Could not log out. Please try again.");
+                console.error(error);
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+    search.addEventListener("input", renderApplications);
+    filter.addEventListener("change", renderApplications);
+    document.getElementById("refresh-button")
+        .addEventListener("click", loadApplications);
+
+    loadApplications();
+</script>
 </body>
 </html>
